@@ -14,16 +14,35 @@ struct RecordType
 // Fill out this structure
 struct HashType
 {
-	int		id;
-	char	name;
-	int		order; 
+	struct RecordType *data;
 	struct HashType *next;
 };
 
+struct HashType *chain[tableSize];
+
 // Compute the hash function
-int hash(int x)
+int hash(int id, char name, int order)
 {
-		
+	struct HashType *newHashType = malloc(sizeof(struct HashType));
+	newHashType->data = malloc(sizeof(struct RecordType));
+	
+	newHashType->data->id = id;
+	newHashType->data->name = name;
+	newHashType->data->order = order;
+	newHashType->next = NULL;
+
+	int key = id % tableSize;
+
+	if (chain[key] == NULL)
+		chain[key] = newHashType;
+	else
+	{
+		struct HashType *temp = chain[key];
+		while (temp->next)
+			temp = temp->next;
+
+		temp->next = newHashType;
+	}
 }
 
 // parses input file to an integer array
@@ -79,13 +98,24 @@ void printRecords(struct RecordType pData[], int dataSz)
 // skip the indices which are free
 // the output will be in the format:
 // index x -> id, name, order -> id, name, order ....
-void displayRecordsInHash(struct HashType *pHashArray, int hashSz)
+void displayRecordsInHash()
 {
 	int i;
 
-	for (i = 0; i < hashSz; ++i)
+	for (i=0;i<tableSize;++i)
 	{
-
+		// if index is occupied with any records, print all
+		struct HashType *temp = chain[i];
+		if (temp != NULL)
+		{
+			printf("Index[%d] --> ", i);
+			while (temp)
+			{
+				printf("%d, %c, %d -> ", temp->data->id, temp->data->name, temp->data->order);
+				temp = temp->next;
+			}
+			printf("NULL\n");
+		}
 	}
 }
 
@@ -97,7 +127,12 @@ int main(void)
 	recordSz = parseData("input.txt", &pRecords);
 	printRecords(pRecords, recordSz);
 	// Your hash implementation
-	struct HashType *chain[tableSize];
-	for (int i = 0; i < tableSize; i++)
+	int i;
+	for (i = 0; i < tableSize; i++)
 		chain[i] = NULL;
+
+	for (i = 0; i < recordSz; i++)
+		hash(pRecords[i].id, pRecords[i].name, pRecords[i].order);
+
+	displayRecordsInHash();
 }
